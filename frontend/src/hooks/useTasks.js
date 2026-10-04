@@ -1,0 +1,36 @@
+import { useState, useEffect } from 'react';
+import { fetchTasks } from '../api';
+
+export function useTasks(query, status, page, pageSize) {
+  const [tasks, setTasks] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isActive = true;
+
+    setLoading(true);
+    setError(null);
+
+    fetchTasks({ query, status, page, pageSize })
+      .then((data) => {
+        if (!isActive) return;
+        setTasks(data.items);
+        setTotal(data.total);
+      })
+      .catch((err) => {
+        if (!isActive) return;
+        setError(err.message);
+      })
+      .finally(() => {
+        if (isActive) setLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [query, status, page, pageSize]);
+
+  return { tasks, total, loading, error };
+}
